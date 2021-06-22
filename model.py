@@ -3,7 +3,7 @@ import tensorflow as tf
 
 class Model:
     def __init__(self, input_shape):
-        # (gray, gray, zero)
+        # (gray_a, gray_b, gray_b)
         if input_shape[-1] == 1:
             self.input_shape = (input_shape[0], input_shape[1], 3)
         # (b, g, r, b, g, r)
