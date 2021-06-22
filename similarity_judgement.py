@@ -24,6 +24,27 @@ class LearningRateScheduler(tf.keras.callbacks.Callback):
             tf.keras.backend.set_value(self.model.optimizer.lr, self.lr)
 
 
+class LiveLossPlot(tf.keras.callbacks.Callback):
+    def __init__(self):
+        super().__init__()
+        self.keys = ['loss', 'val_loss']
+        self.vs = dict()
+        for key in self.keys:
+            self.vs[key] = []
+        self.colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+
+    def on_epoch_end(self, epoch, logs=None):
+        from matplotlib import pyplot as plt
+        for key in self.keys:
+            self.vs[key].append(logs[key])
+        for i in range(len(self.vs)):
+            plt.plot(self.vs[self.keys[i]], color=self.colors[i])
+        plt.xlabel('Epoch')
+        plt.legend(self.keys)
+        plt.draw()
+        plt.pause(1e-7)
+
+
 class SimilarityJudgementModel:
     def __init__(
             self,
@@ -63,11 +84,6 @@ class SimilarityJudgementModel:
             img_type=self.img_type)
 
     def fit(self):
-
-        @tf.function
-        def predict_on_graph(model, x):
-            return model(x, training=False)
-
         self.model.model.compile(
             optimizer=tf.keras.optimizers.Adam(lr=self.lr),
             loss=tf.keras.losses.BinaryCrossentropy(label_smoothing=0.1),
@@ -79,6 +95,7 @@ class SimilarityJudgementModel:
             os.makedirs('checkpoints', exist_ok=True)
         callbacks = [
             LearningRateScheduler(self.lr, self.epochs),
+            LiveLossPlot(),
             tf.keras.callbacks.ModelCheckpoint(
                 filepath='checkpoints/sj_epoch_{epoch}_val_binary_accuracy_{val_binary_accuracy:.4f}.h5',
                 monitor='val_binary_accuracy',
